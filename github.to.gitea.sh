@@ -4,6 +4,8 @@ echo "arg1 github token"
 echo "arg2 gitea token"
 echo "if youre not me youll need to edit this to point at you, its not that smart."
 
+sudo apt update && sudo apt install -y git jq curl sed
+
 GITHUB_USERNAME=alycecil
 GITHUB_TOKEN=$1
 GITHUB_ORGANISATION=alycecil
