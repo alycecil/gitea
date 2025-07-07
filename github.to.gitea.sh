@@ -15,15 +15,26 @@ GITEA_TOKEN=$2
 GITEA_DOMAIN=localhost:3000
 GITEA_REPO_OWNER=alices_github
 
-GET_CURL=$(curl -H 'Accept: application/vnd.github.v3+json' -u $GITHUB_USERNAME:$GITHUB_TOKEN -s "https://api.github.com/users/$GITHUB_ORGANISATION/repos?per_page=200&type=all")
+
+PAGE=1
+length=1
+
+while [ 0 -lt "$length" ];
+do
+#GET_CURL=$(curl -H 'Accept: application/vnd.github.v3+json' -u $GITHUB_USERNAME:$GITHUB_TOKEN -s "https://api.github.com/orgs/$GITHUB_ORGANISATION/repos?per_page=200&type=all")
+GET_CURL=$(curl -H 'Accept: application/vnd.github.v3+json' -u $GITHUB_USERNAME:$GITHUB_TOKEN -s "https://api.github.com/users/$GITHUB_ORGANISATION/repos?per_page=100&type=all&page=${PAGE}")
 
 echo $GET_CURL
 
 GET_REPOS=$(echo $GET_CURL | jq -r '.[].html_url')
 
+length=$(echo $GET_CURL | jq '. | length')
+
+echo page=${PAGE} length=$length
+
 for URL in $GET_REPOS; do
 
-    REPO_NAME=$(echo $URL | sed "s|https://github.com/$GITHUB_ORGANISATION/||g")
+    REPO_NAME=$(echo $URL | sed "s|https://github.com/$GITHUB_ORGANISATION/||g" | sed -r 's|.+/||g')
 
     echo "Found $REPO_NAME, importing..."
 
@@ -46,11 +57,16 @@ for URL in $GET_REPOS; do
 
     echo PAYLOAD=${PAYLOAD}
 
-    curl -v -X POST "https://$GITEA_DOMAIN/api/v1/repos/migrate" -u $GITEA_USERNAME:$GITEA_TOKEN -H  "accept: application/json" -H  "Content-Type: application/json" -d "${PAYLOAD}"
+    curl -X POST "https://$GITEA_DOMAIN/api/v1/repos/migrate" -u $GITEA_USERNAME:$GITEA_TOKEN -H  "accept: application/json" -H  "Content-Type: application/json" -d "${PAYLOAD}"
 
 #       exit 1
 
 done
+
+(( PAGE++ ))
+
+done
+
 
 
 
